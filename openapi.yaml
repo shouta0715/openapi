@@ -1,0 +1,134 @@
+openapi: "3.0.3"
+
+info:
+  title: "口コミサイト API"
+  version: "1.0.0"
+  description: |
+    # Features
+    - Get reviews
+    - Post reviews
+  termsOfService: "https://testylog.com/terms"
+  contact:
+    name: "Customer Support"
+    url: "https://testylog.com/support"
+    email: "example@example.com"
+  license:
+    name: "MIT License"
+    url: "https://testylog.com/support"
+
+servers:
+  - url: "http://localhost:80/{version}"
+    description: "Development"
+    variables:
+      version:
+        enum: ["v1", "v2"]
+        default: "v2"
+  - url: "http://localhost:product/{version}"
+    description: "Products"
+    variables:
+      version:
+        enum: ["v1"]
+        default: "v1"
+
+components:
+  schemas:
+    Review:
+      type: object
+      properties:
+        score: { type: integer }
+        comment: { type: string }
+    ClientError:
+      type: object
+      properties:
+        code: { type: string }
+        type: { type: string }
+        message: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              code: { type: string }
+  securitySchemes:
+    api_key:
+      description: "API KEY Authorization"
+      type: apiKey
+      in: header
+      name: "X-Api-Key"
+
+  responses:
+    400-BadRequest:
+      description: "Client Side Error"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ClientError"
+
+tags:
+  - name: reviews
+    description: "Shop review operations"
+
+security:
+  - api_key: []
+
+paths:
+  "/shops/{shopId}/reviews":
+    parameters:
+      - name: shopId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: "Get specified shop reviews"
+      description: "(descriptions) Get Specified shop reviews"
+      deprecated: false
+      tags: ["shops", "reviews"]
+      responses:
+        "200":
+          description: "Success operations"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+      security: []
+
+    post:
+      summary: "Create reviews"
+      tags: ["shops", "reviews"]
+
+      parameters:
+        - name: X-Api-Key
+          in: header
+          description: "Request user's identification"
+          schema: { type: string }
+          example: "XXXX-XXXX-XXXX-XXXX"
+        - name: token
+          in: cookie
+          description: "One Time token"
+          schema: { type: string }
+          example: "XXXX-XXXX-XXXX-XXXX"
+      requestBody:
+        description: "Contents of reviews"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Review"
+      security:
+        - api_key: []
+
+      responses:
+        "201":
+          description: "Success operations"
+          headers:
+            location:
+              description: "New URL of created reviews"
+              schema: { type: string, format: url }
+
+        "400":
+          $ref: "#/components/responses/400-BadRequest"
